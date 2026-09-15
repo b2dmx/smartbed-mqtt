@@ -1,5 +1,5 @@
 {
-  "name": "Smartbed MQTT",
+  "name": "Smartbed MQTT (ActiveBreeze test)",
   "version": "1.1.22-activebreeze-test",
   "slug": "smartbed-mqtt",
   "description": "A Home Assistant add-on to enable controlling smart beds.",
