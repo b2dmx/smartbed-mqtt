@@ -165,5 +165,17 @@ export const processClimateEntities = async (
       applyFan,
     };
   }
-  cache.climate.applyFan(fan);
+
+  const climate = cache.climate;
+  climate.applyFan(fan);
+  // Entity state is published without the retain flag, so re-assert availability and
+  // state every cycle; otherwise an HA or broker restart leaves these unavailable.
+  for (const side of SIDES) {
+    const entities = climate.sides[side];
+    entities.cooling.republish();
+    entities.constantCool.republish();
+    entities.heat.republish();
+  }
+  climate.coolingSync.republish();
+  climate.heatSync.republish();
 };
