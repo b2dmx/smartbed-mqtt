@@ -34,9 +34,13 @@ export class StatefulEntity<T> extends Entity implements IStateful<T> {
     if (state === null) {
       return this.setOffline();
     }
-    if (this.state === state) return this;
-    this.state = state;
-    this.sendState();
+    if (this.state !== state) {
+      this.state = state;
+      this.sendState();
+    }
+    // Always re-assert availability, even when the value is unchanged: a transient
+    // upstream failure marks entities offline, and if the value happens to be the same
+    // once it recovers the entity would otherwise stay unavailable until a restart.
     this.setOnline();
     return this;
   }
@@ -45,14 +49,11 @@ export class StatefulEntity<T> extends Entity implements IStateful<T> {
     return this.state;
   }
 
-  // Re-send availability and the current state. Messages are published without the
-  // retain flag, so anything HA missed (restart, broker reconnect) is gone; and setState
-  // is a no-op when the value is unchanged, which would otherwise leave the entity
-  // permanently unavailable. Callers invoke this on each refresh cycle.
+  // setState is a no-op when the value is unchanged, so an entity whose value never
+  // changes would never re-send. Re-send the current state alongside availability.
   republish() {
-    if (this.state === undefined) return this;
-    this.sendState();
-    this.setOnline();
+    super.republish();
+    if (this.state !== undefined) this.sendState();
     return this;
   }
 

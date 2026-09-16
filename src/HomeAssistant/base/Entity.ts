@@ -17,9 +17,20 @@ export type EntityConfig = {
 };
 
 export class Entity implements IAvailable {
+  // Every entity registers itself so a refresh cycle can re-assert what HA may have
+  // missed: messages are published without the retain flag, so an HA restart or broker
+  // reconnect silently drops state and availability, and an entity whose value never
+  // changes would otherwise never publish again.
+  private static readonly all: Entity[] = [];
+
+  static republishAll() {
+    for (const entity of Entity.all) entity.republish();
+  }
+
   protected baseTopic: string;
   private availabilityTopic: string;
   private entityTag: string;
+  private availability?: string;
   private uniqueId: string;
 
   constructor(
@@ -37,6 +48,7 @@ export class Entity implements IAvailable {
       if (message === ONLINE) setTimeout(() => this.publishDiscovery(), seconds(15));
     });
     setTimeout(() => this.publishDiscovery(), 50);
+    Entity.all.push(this);
   }
 
   publishDiscovery() {
@@ -62,12 +74,20 @@ export class Entity implements IAvailable {
   }
 
   setOffline() {
+    this.availability = OFFLINE;
     this.sendAvailability(OFFLINE);
     return this;
   }
 
   setOnline() {
+    this.availability = ONLINE;
     this.sendAvailability(ONLINE);
+    return this;
+  }
+
+  // Re-send availability. Subclasses that hold state also re-send it.
+  republish() {
+    if (this.availability !== undefined) this.sendAvailability(this.availability);
     return this;
   }
 
@@ -75,3 +95,5 @@ export class Entity implements IAvailable {
     setTimeout(() => this.mqtt.publish(this.availabilityTopic, availability), 500);
   }
 }
+
+export const republishEntities = () => Entity.republishAll();

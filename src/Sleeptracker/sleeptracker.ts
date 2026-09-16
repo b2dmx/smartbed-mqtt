@@ -1,4 +1,5 @@
 import { IMQTTConnection } from '@mqtt/IMQTTConnection';
+import { republishEntities } from '@ha/base/Entity';
 import { Dictionary } from '@utils/Dictionary';
 import { getSideNameFunc } from '@utils/getSideNameFunc';
 import { logError, logInfo } from '@utils/logger';
@@ -134,6 +135,7 @@ export const sleeptracker = async (mqtt: IMQTTConnection) => {
       }
       if (environmentSensors) await processEnvironmentSensors(mqtt, bed);
     }
+    republishEntities();
   };
   await refreshDeviceData();
   setInterval(refreshDeviceData, minutes(getRefreshFrequency()));
