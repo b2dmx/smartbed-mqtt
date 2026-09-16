@@ -1,4 +1,4 @@
-import { logError, logInfo } from '@utils/logger';
+import { logError, logInfo, logWarn } from '@utils/logger';
 import { getDevices } from './options';
 import { IESPConnection } from 'ESPHome/IESPConnection';
 import { buildDictionary } from '@utils/buildDictionary';
@@ -111,6 +111,32 @@ export const scanner = async (esphome: IESPConnection) => {
     };
 
     logInfo(`[Scanner] Output:\n${JSON.stringify(deviceData, null, 2)}`);
+
+    if (device.listen) {
+      const notifyCharacteristics = servicesList.flatMap(({ uuid: serviceUuid, characteristicsList }) =>
+        characteristicsList
+          .filter(({ properties }) => properties.includes('NOTIFY') || properties.includes('INDICATE'))
+          .map(({ uuid, handle }) => ({ serviceUuid, uuid, handle }))
+      );
+
+      if (!notifyCharacteristics.length) {
+        logWarn('[Scanner] listen requested but device has no notify/indicate characteristics:', name);
+      } else {
+        const started = Date.now();
+        for (const { serviceUuid, uuid, handle } of notifyCharacteristics) {
+          await bleDevice.subscribeToCharacteristic(handle, (data) => {
+            const hex = Array.from(data)
+              .map((b) => b.toString(16).padStart(2, '0'))
+              .join(' ');
+            const elapsed = ((Date.now() - started) / 1000).toFixed(1);
+            logInfo(`[Scanner] Notify +${elapsed}s handle 0x${handle.toString(16)} ${uuid}: ${hex}`);
+          });
+          logInfo(`[Scanner] Listening on ${serviceUuid} / ${uuid} (handle 0x${handle.toString(16)})`);
+        }
+        logInfo('[Scanner] Staying connected and logging notifications - operate the device now, then stop the add-on.');
+      }
+      return;
+    }
 
     await disconnect();
 
