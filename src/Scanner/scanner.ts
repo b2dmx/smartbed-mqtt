@@ -135,6 +135,39 @@ export const scanner = async (esphome: IESPConnection) => {
         }
         logInfo('[Scanner] Staying connected and logging notifications - operate the device now, then stop the add-on.');
       }
+
+      if (device.writes?.length) {
+        // Only ever the Nordic UART command characteristic. Never the DFU characteristic
+        // (fe59 / 8ec90003) - writing to that can put the device into bootloader mode.
+        const writeCharacteristic = servicesList
+          .flatMap(({ characteristicsList }) => characteristicsList)
+          .find(({ uuid }) => uuid === '6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+
+        if (!writeCharacteristic) {
+          logWarn('[Scanner] writes requested but device has no Nordic UART command characteristic:', name);
+        } else {
+          const delay = device.writeDelayMs ?? 4000;
+          for (const frame of device.writes) {
+            const bytes = frame
+              .trim()
+              .split(/[\s,]+/)
+              .filter((part) => part.length)
+              .map((part) => parseInt(part, 16));
+            if (bytes.some((value) => Number.isNaN(value) || value < 0 || value > 0xff)) {
+              logWarn(`[Scanner] Skipping unparseable write frame: ${frame}`);
+              continue;
+            }
+            logInfo(`[Scanner] Write -> ${bytes.map((b) => b.toString(16).padStart(2, '0')).join(' ')}`);
+            try {
+              await bleDevice.writeCharacteristic(writeCharacteristic.handle, new Uint8Array(bytes), true);
+            } catch (err) {
+              logError('[Scanner] Write failed', err);
+            }
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          }
+          logInfo('[Scanner] Finished writing probe frames; still listening.');
+        }
+      }
       return;
     }
 
