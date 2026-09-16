@@ -27,6 +27,18 @@ export class Entity implements IAvailable {
     for (const entity of Entity.all) entity.republish();
   }
 
+  private static republishTimer?: NodeJS.Timeout;
+
+  // Entities publish availability (and state) once, shortly after their discovery
+  // message and without the retain flag. When many entities are created at once HA
+  // may still be processing discovery when those arrive, stranding them as
+  // unavailable - and BLE device types have no refresh loop to correct it. Re-assert
+  // on a timer so a missed message is always recovered.
+  private static ensureRepublishTimer() {
+    if (Entity.republishTimer) return;
+    Entity.republishTimer = setInterval(() => Entity.republishAll(), seconds(30));
+  }
+
   protected baseTopic: string;
   private availabilityTopic: string;
   private entityTag: string;
@@ -49,6 +61,7 @@ export class Entity implements IAvailable {
     });
     setTimeout(() => this.publishDiscovery(), 50);
     Entity.all.push(this);
+    Entity.ensureRepublishTimer();
   }
 
   publishDiscovery() {
