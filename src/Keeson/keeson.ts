@@ -4,7 +4,9 @@ import { logError, logInfo, logWarn } from '@utils/logger';
 import { setupDeviceInfoSensor } from 'BLE/setupDeviceInfoSensor';
 import { buildMQTTDeviceData } from 'Common/buildMQTTDeviceData';
 import { IESPConnection } from 'ESPHome/IESPConnection';
-import { getDevices } from './options';
+import { getDevices, getSyncName, getSyncSides } from './options';
+import { buildSyncController } from './syncController';
+import { IController } from 'Common/IController';
 import { setupMassageButtons } from './setupMassageButtons';
 import { setupPresetButtons } from './setupPresetButtons';
 import { setupMotorEntities } from './setupMotorEntities';
@@ -28,6 +30,7 @@ export const keeson = async (mqtt: IMQTTConnection, esphome: IESPConnection): Pr
   if (deviceNames.length !== devices.length) return logError('[Keeson] Duplicate name detected in configuration');
 
   const bleDevices = await esphome.getBLEDevices(deviceNames);
+  const controllers: IController<number>[] = [];
   for (const bleDevice of bleDevices) {
     const { name, mac, address, connect, disconnect, getDeviceInfo } = bleDevice;
     const device = devicesMap[mac] || devicesMap[name.toLowerCase()];
@@ -60,6 +63,8 @@ export const keeson = async (mqtt: IMQTTConnection, esphome: IESPConnection): Pr
       continue;
     }
 
+    controllers.push(controller);
+
     logInfo('[Keeson] Setting up entities for device:', name);
     setupPresetButtons(mqtt, controller);
     setupMassageButtons(mqtt, controller);
@@ -68,4 +73,15 @@ export const keeson = async (mqtt: IMQTTConnection, esphome: IESPConnection): Pr
     const deviceInfo = await getDeviceInfo();
     if (deviceInfo) setupDeviceInfoSensor(mqtt, controller, deviceInfo);
   }
+
+  if (!getSyncSides()) return;
+  if (controllers.length < 2) {
+    return logWarn('[Keeson] keesonSyncSides is enabled but fewer than two controllers connected; not creating the synchronized device');
+  }
+
+  logInfo('[Keeson] Setting up synchronized entities for', controllers.length, 'controllers');
+  const sync = buildSyncController(getSyncName(), controllers);
+  setupPresetButtons(mqtt, sync);
+  setupMassageButtons(mqtt, sync);
+  setupMotorEntities(mqtt, sync);
 };

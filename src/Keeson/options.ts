@@ -7,6 +7,8 @@ export interface KeesonDevice {
 
 interface OptionsJson {
   keesonDevices: KeesonDevice[];
+  keesonSyncSides?: boolean;
+  keesonSyncName?: string;
 }
 
 const options: OptionsJson = getRootOptions();
@@ -18,3 +20,9 @@ export const getDevices = () => {
   }
   return [];
 };
+
+// A split base has one controller per side. With a single mattress across both,
+// moving one side alone risks damaging it, so offer a device that drives both at once.
+export const getSyncSides = () => options.keesonSyncSides === true;
+
+export const getSyncName = () => options.keesonSyncName || 'Bed';

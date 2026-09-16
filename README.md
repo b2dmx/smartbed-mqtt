@@ -305,6 +305,13 @@ You must specify at least one bleProxy as demonstrated in the config defaults. Y
 - Covers to control motors for raising, lowering, and stopping the head/feet/tilt/lumbar
 - ActiveBreeze climate control: cooling level select (Off/Low/Medium/High), Temp-Curve vs Constant Cool switch, and heat switch per side, plus Sync entities that set both sides at once
 
+
+Set `keesonSyncSides` to `true` to also publish a single device that drives every
+configured controller at once. A split base has one controller per side; when both halves
+sit under a **single mattress**, moving one side on its own can damage it, so the
+synchronized device is the safe default to use. The per-side devices are still published
+for genuine split-mattress setups. `keesonSyncName` sets its name (default `Bed`).
+
 ## Notes
 
 This remains connected to the bed controller and due to the bed only accepting one connection it will stop you from using the app to control the bed.
