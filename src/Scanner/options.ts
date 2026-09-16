@@ -16,6 +16,9 @@ export interface ScannerDevice {
   // Wait this long after subscribing before the first write, so a run can be timed to
   // a wall-clock second regardless of how long the add-on restart and connect take.
   writeStartDelayMs?: number;
+  // Absolute ISO-8601 instant for the first write, e.g. '2026-09-16T20:20:00Z'. Takes
+  // precedence over writeStartDelayMs and makes add-on restart latency irrelevant.
+  writeStartAt?: string;
 }
 
 interface OptionsJson {
