@@ -13,6 +13,9 @@ export interface ScannerDevice {
   // undocumented command set gets probed. Writes never target the DFU characteristic.
   writes?: string[];
   writeDelayMs?: number;
+  // Wait this long after subscribing before the first write, so a run can be timed to
+  // a wall-clock second regardless of how long the add-on restart and connect take.
+  writeStartDelayMs?: number;
 }
 
 interface OptionsJson {

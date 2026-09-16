@@ -147,6 +147,11 @@ export const scanner = async (esphome: IESPConnection) => {
           logWarn('[Scanner] writes requested but device has no Nordic UART command characteristic:', name);
         } else {
           const delay = device.writeDelayMs ?? 4000;
+          if (device.writeStartDelayMs) {
+            logInfo(`[Scanner] Holding ${device.writeStartDelayMs}ms before first write`);
+            await new Promise((resolve) => setTimeout(resolve, device.writeStartDelayMs));
+          }
+          logInfo(`[Scanner] Writing begins at ${new Date().toISOString()}`);
           for (const frame of device.writes) {
             const bytes = frame
               .trim()
