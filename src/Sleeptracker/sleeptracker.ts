@@ -9,7 +9,7 @@ import { buildMQTTDeviceData } from './buildMQTTDeviceData';
 import { DeviceInfoSensor } from './entities/DeviceInfoSensor';
 import { HelloDataSensor } from './entities/InfoSensor';
 import { SleepSensorInfoSensor } from './entities/SensorMapInfoSensor';
-import { getRefreshFrequency, getUsers } from './options';
+import { getRefreshFrequency, getUsers, isFeatureEnabled } from './options';
 import { processBedPositionSensors } from './processors/bedPositionSensors';
 import { processClimateEntities } from './processors/climateEntities';
 import { processEnvironmentSensors } from './processors/environmentSensors';
@@ -116,24 +116,24 @@ export const sleeptracker = async (mqtt: IMQTTConnection) => {
       const { smartBedControls, environmentSensors, motors } = bed.supportedFeatures;
       if (smartBedControls) {
         const snapshots = await sendAdjustableBaseCommand(Commands.Status, bed.primaryUser);
-        await processClimateEntities(mqtt, bed, bed.primaryUser, snapshots);
+        if (isFeatureEnabled('climate')) await processClimateEntities(mqtt, bed, bed.primaryUser, snapshots);
         for (const controller of bed.controllers) {
-          await setupPresetButtons(mqtt, bed, controller);
-          await setupMassageButtons(mqtt, bed, controller);
-          if (motors) await setupMotorEntities(mqtt, bed, controller);
+          if (isFeatureEnabled('presets')) await setupPresetButtons(mqtt, bed, controller);
+          if (isFeatureEnabled('massage')) await setupMassageButtons(mqtt, bed, controller);
+          if (motors && isFeatureEnabled('motors')) await setupMotorEntities(mqtt, bed, controller);
 
-          await processSnoreReliefSwitches(mqtt, bed, controller);
+          if (isFeatureEnabled('snoreRelief')) await processSnoreReliefSwitches(mqtt, bed, controller);
 
           const snapshot = snapshots.find((s) => s.side === controller.side);
           if (!snapshot) continue;
 
-          await processBedPositionSensors(mqtt, bed, controller, snapshot);
-          await processMassageSensors(mqtt, bed, controller, snapshot);
+          if (isFeatureEnabled('motors')) await processBedPositionSensors(mqtt, bed, controller, snapshot);
+          if (isFeatureEnabled('massage')) await processMassageSensors(mqtt, bed, controller, snapshot);
 
-          await processSafetyLightSwitches(mqtt, bed, controller, snapshot);
+          if (isFeatureEnabled('safetyLight')) await processSafetyLightSwitches(mqtt, bed, controller, snapshot);
         }
       }
-      if (environmentSensors) await processEnvironmentSensors(mqtt, bed);
+      if (environmentSensors && isFeatureEnabled('environment')) await processEnvironmentSensors(mqtt, bed);
     }
     republishEntities();
   };

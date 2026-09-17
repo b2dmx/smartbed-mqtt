@@ -38,6 +38,33 @@ This project aims to enable remote control of adjustable smart beds from HomeAss
 - Click on Configuration and set type followed by the necessary configuration as described below.
 - Click on Info and click Start.
 
+## Running more than one type
+
+Most installations only need a single `type`. Some beds, however, are reachable in more than
+one way at the same time - a Keeson control box can be driven locally over BLE while the
+manufacturer cloud still owns features that have no local equivalent (Tempur ActiveBreeze
+cooling, for example). `additionalTypes` accepts a list of extra types to start alongside
+`type`; each one uses its own existing configuration, and BLE types share a single set of
+`bleProxies` connections.
+
+```
+type: keeson
+additionalTypes:
+  - sleeptracker
+```
+
+Both types create their own device in Home Assistant, so anything provided by both is exposed
+twice. For Sleeptracker, `sleeptrackerFeatures` narrows what the cloud connection publishes -
+an empty list (the default) means everything:
+
+```
+sleeptrackerFeatures:
+  - climate
+```
+
+Valid values are `climate`, `presets`, `massage`, `motors`, `snoreRelief`, `safetyLight` and
+`environment`.
+
 ## MQTT broker
 
 An MQTT broker is required. The [Mosquitto official Add-On](https://github.com/home-assistant/addons/tree/master/mosquitto) is recommended. Go to Add-ons and search for MQTT, then follow the provided instructions.

@@ -23,6 +23,7 @@
     "mqtt_user": "<auto_detect>",
     "mqtt_password": "<auto_detect>",
     "type": "sleeptracker",
+    "additionalTypes": [],
     "sleeptrackerRefreshFrequency": 1,
     "sleeptrackerCredentials": [
       {
@@ -31,6 +32,7 @@
         "type": "tempur"
       }
     ],
+    "sleeptrackerFeatures": [],
     "ergoWifiCredentials": [
       {
         "email": "me@example.org",
@@ -125,6 +127,9 @@
     "mqtt_user": "str",
     "mqtt_password": "password",
     "type": "list(scanner|sleeptracker|ergowifi|richmat|linak|solace|motosleep|reverie|leggettplatt|logicdata|ergomotion|okimat|keeson|octo)",
+    "additionalTypes": [
+      "list(scanner|sleeptracker|ergowifi|richmat|linak|solace|motosleep|reverie|leggettplatt|logicdata|ergomotion|okimat|keeson|octo)?"
+    ],
     "sleeptrackerRefreshFrequency": "int(0,)",
     "sleeptrackerCredentials": [
       {
@@ -132,6 +137,9 @@
         "password": "password",
         "type": "list(tempur|beautyrest|serta)?"
       }
+    ],
+    "sleeptrackerFeatures": [
+      "list(climate|presets|massage|motors|snoreRelief|safetyLight|environment)?"
     ],
     "ergoWifiCredentials": [
       {
