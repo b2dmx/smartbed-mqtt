@@ -83,7 +83,15 @@ export const processClimateEntities = async (
       const left = sideState(newFan, 'left');
       const right = sideState(newFan, 'right');
       const leftOption = coolingOption(left);
-      if (leftOption === coolingOption(right)) climate.coolingSync.setState(leftOption);
+      if (leftOption === coolingOption(right)) {
+        climate.coolingSync.setState(leftOption);
+      } else {
+        // The sides disagree, so there is no shared value to show - but the control
+        // still works (picking an option applies it to both). Re-assert availability
+        // explicitly: setState() is what normally does that, so without this the
+        // entity stays unavailable for as long as the two sides differ.
+        climate.coolingSync.setOnline();
+      }
       climate.heatSync.setState(isHeatOn(left) && isHeatOn(right));
     };
 
