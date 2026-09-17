@@ -62,8 +62,14 @@ sleeptrackerFeatures:
   - climate
 ```
 
-Valid values are `climate`, `presets`, `massage`, `motors`, `snoreRelief`, `safetyLight` and
-`environment`.
+Valid values are `climate`, `presets`, `massage`, `massageSensors`, `motors`,
+`positionSensors`, `snoreRelief`, `safetyLight` and `environment`.
+
+Read-only sensors are deliberately separate from the controls that go with them:
+`motors` publishes the head/feet covers while `positionSensors` publishes the angle
+sensors, and `massage` publishes the massage buttons while `massageSensors` publishes
+strength and pattern. A bed driven locally usually wants the controls off and the
+sensors on, because the local integration has no equivalent of them.
 
 ## MQTT broker
 
