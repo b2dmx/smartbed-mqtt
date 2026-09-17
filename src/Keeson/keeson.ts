@@ -10,6 +10,7 @@ import { IController } from 'Common/IController';
 import { setupMassageButtons } from './setupMassageButtons';
 import { setupPresetButtons } from './setupPresetButtons';
 import { setupMotorEntities } from './setupMotorEntities';
+import { setupLightButton } from './setupLightButton';
 import { isSupported as isKSBTSupported } from './KSBT/isSupported';
 import { controllerBuilder as ksbtControllerBuilder } from './KSBT/controllerBuilder';
 import { isSupported as isBaseI5Supported } from './BaseI5/isSupported';
@@ -69,6 +70,7 @@ export const keeson = async (mqtt: IMQTTConnection, esphome: IESPConnection): Pr
     setupPresetButtons(mqtt, controller);
     setupMassageButtons(mqtt, controller);
     setupMotorEntities(mqtt, controller);
+    setupLightButton(mqtt, controller);
 
     const deviceInfo = await getDeviceInfo();
     if (deviceInfo) setupDeviceInfoSensor(mqtt, controller, deviceInfo);
@@ -84,4 +86,5 @@ export const keeson = async (mqtt: IMQTTConnection, esphome: IESPConnection): Pr
   setupPresetButtons(mqtt, sync);
   setupMassageButtons(mqtt, sync);
   setupMotorEntities(mqtt, sync);
+  setupLightButton(mqtt, sync);
 };

@@ -10,4 +10,5 @@ export const setupMassageButtons = (mqtt: IMQTTConnection, controller: IControll
   buildCommandButton('Keeson', mqtt, controller, 'MassageFootDown', Commands.MassageFootDown);
   buildCommandButton('Keeson', mqtt, controller, 'MassageTimerStep', Commands.MassageTimerStep);
   buildCommandButton('Keeson', mqtt, controller, 'MassageAllToggle', Commands.MassageStep);
+  buildCommandButton('Keeson', mqtt, controller, 'MassageWaveStep', Commands.MassageWaveStep);
 };
