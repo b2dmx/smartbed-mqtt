@@ -7,6 +7,8 @@ export type Feature =
   | 'presets'
   | 'massage'
   | 'motors'
+  | 'positionSensors'
+  | 'massageSensors'
   | 'snoreRelief'
   | 'safetyLight'
   | 'environment';

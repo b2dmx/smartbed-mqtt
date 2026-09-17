@@ -1,6 +1,6 @@
 {
   "name": "Smartbed MQTT (ActiveBreeze test)",
-  "version": "1.1.22-activebreeze-test13",
+  "version": "1.1.22-activebreeze-test14",
   "slug": "smartbed-mqtt",
   "description": "A Home Assistant add-on to enable controlling smart beds.",
   "url": "https://github.com/richardhopton/smartbed-mqtt",
@@ -139,7 +139,7 @@
       }
     ],
     "sleeptrackerFeatures": [
-      "list(climate|presets|massage|motors|snoreRelief|safetyLight|environment)?"
+      "list(climate|presets|massage|massageSensors|motors|positionSensors|snoreRelief|safetyLight|environment)?"
     ],
     "ergoWifiCredentials": [
       {

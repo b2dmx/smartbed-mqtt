@@ -127,8 +127,8 @@ export const sleeptracker = async (mqtt: IMQTTConnection) => {
           const snapshot = snapshots.find((s) => s.side === controller.side);
           if (!snapshot) continue;
 
-          if (isFeatureEnabled('motors')) await processBedPositionSensors(mqtt, bed, controller, snapshot);
-          if (isFeatureEnabled('massage')) await processMassageSensors(mqtt, bed, controller, snapshot);
+          if (isFeatureEnabled('positionSensors')) await processBedPositionSensors(mqtt, bed, controller, snapshot);
+          if (isFeatureEnabled('massageSensors')) await processMassageSensors(mqtt, bed, controller, snapshot);
 
           if (isFeatureEnabled('safetyLight')) await processSafetyLightSwitches(mqtt, bed, controller, snapshot);
         }
