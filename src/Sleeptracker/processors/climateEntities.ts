@@ -44,6 +44,13 @@ const coolingOption = ({ level, isHeating }: ReturnType<typeof sideState>) =>
 
 const isHeatOn = ({ level, isHeating }: ReturnType<typeof sideState>) => isHeating && level > 0;
 
+// Sleeptracker's servers return 503 often, and a failed poll arrives here as an empty
+// snapshot list - indistinguishable from a bed that has gone away. Marking everything
+// unavailable on the first miss makes the dashboard look broken several times an hour
+// for what is usually a blip, so require a few consecutive misses before giving up.
+const MISSES_BEFORE_OFFLINE = 3;
+const consecutiveMisses: Record<string, number> = {};
+
 export const processClimateEntities = async (
   mqtt: IMQTTConnection,
   bed: Bed,
@@ -53,7 +60,8 @@ export const processClimateEntities = async (
   const cache = bed.entities as unknown as ClimateEntities;
   const fan = snapshots.find((s) => s.fan)?.fan;
   if (!fan) {
-    if (cache.climate) {
+    const misses = (consecutiveMisses[bed.processorId] = (consecutiveMisses[bed.processorId] ?? 0) + 1);
+    if (cache.climate && misses >= MISSES_BEFORE_OFFLINE) {
       for (const side of SIDES) {
         cache.climate.sides[side].cooling.setOffline();
         cache.climate.sides[side].constantCool.setOffline();
@@ -64,6 +72,7 @@ export const processClimateEntities = async (
     }
     return;
   }
+  consecutiveMisses[bed.processorId] = 0;
 
   if (!cache.climate) {
     const { deviceData } = bed;
