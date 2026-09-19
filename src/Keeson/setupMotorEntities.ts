@@ -1,5 +1,6 @@
 import { Cover } from '@ha/Cover';
 import { IMQTTConnection } from '@mqtt/IMQTTConnection';
+import { logError } from '@utils/logger';
 import { buildEntityConfig } from 'Common/buildEntityConfig';
 import { Commands } from 'Common/Commands';
 import { IController } from 'Common/IController';
@@ -34,6 +35,16 @@ export const setupMotorEntities = (
   if (!cache.motorState) cache.motorState = {};
 
   const buildCoverCommand = (motor: keyof MotorState) => async (command: string) => {
+    try {
+      await sendCoverCommand(motor, command);
+    } catch (e) {
+      // Never let a BLE failure escape a cover handler - unhandled, it reaches the
+      // process-level uncaughtException handler and takes the add-on down.
+      logError('[Keeson] Failed to move motor', e);
+    }
+  };
+
+  const sendCoverCommand = async (motor: keyof MotorState, command: string) => {
     const motorState = cache.motorState!;
     const originalCommand = move(motorState);
     motorState[motor] = command === 'OPEN' ? true : command === 'CLOSE' ? false : undefined;

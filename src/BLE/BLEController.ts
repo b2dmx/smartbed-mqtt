@@ -63,7 +63,16 @@ export class BLEController<TCommand> extends EventEmitter implements IEventSourc
     const commandList = commands.map(this.commandBuilder).filter((command) => command.length > 0);
     if (commandList.length === 0) return;
 
-    await this.bleDevice.connect();
+    try {
+      await this.bleDevice.connect();
+    } catch (e) {
+      // A flaky BLE proxy drops out mid-connect and the rejection escapes to the
+      // process-level uncaughtException handler, which exits - so one dropped
+      // connection takes down every other device this add-on is serving. Losing a
+      // single command is the correct cost here.
+      logError('[BLE] Failed to connect, dropping command', e);
+      return;
+    }
 
     const onTick =
       commandList.length === 1 ? () => this.write(commandList[0]) : () => loopWithWait(commandList, this.write);
