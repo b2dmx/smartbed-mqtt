@@ -10,6 +10,15 @@ export const connect = (connection: Connection) => {
     connection.once('authorized', async () => {
       logInfo('[ESPHome] Connected:', connection.host);
       connection.off('error', errorHandler);
+      // Keep a permanent error listener for the life of the connection. Without one,
+      // a later socket drop (ECONNRESET, proxy reboot, Wi-Fi blip) emits an 'error'
+      // with no listener attached, which Node rethrows into uncaughtException - and the
+      // whole add-on exits. Repeated fast exits trip Supervisor's crash-loop guard,
+      // which then leaves the add-on stopped (dead for a day, as observed). Log it and
+      // let auto-reconnect recover instead of crashing.
+      connection.on('error', (error: any) =>
+        logError('[ESPHome] Connection error (will auto-reconnect):', connection.host, error?.message ?? error)
+      );
       // TODO: Fix next two lines after new version of esphome-native-api is released
       const deviceInfo = await connection.deviceInfoService();
       const { bluetoothProxyFeatureFlags } = deviceInfo as any;

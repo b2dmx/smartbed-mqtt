@@ -14,7 +14,10 @@ export const connectToESPHome = async (): Promise<IESPConnection> => {
       ? []
       : await Promise.all(
           proxies.map(async (config: BLEProxy) => {
-            const connection = new Connection(config);
+            // reconnect:true lets the library re-establish the SAME connection
+            // object's socket after a drop, so existing controller references stay
+            // valid and per-command BLE connects keep working.
+            const connection = new Connection({ ...config, reconnect: true } as any);
             return await connect(connection);
           })
         );
