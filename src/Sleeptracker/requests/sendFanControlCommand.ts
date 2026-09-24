@@ -1,4 +1,4 @@
-import { logError } from '@utils/logger';
+import { logError, logInfo } from '@utils/logger';
 import axios from 'axios';
 import { Credentials } from '../options';
 import { Snapshot } from '../types/Snapshot';
@@ -28,6 +28,16 @@ const buildSidePayload = (side: FanSide, { level, isHeating, isConstant }: FanSi
   [`${side}IsConstant`]: isConstant,
 });
 
+// The bed drops off Sleeptracker's cloud regularly (weak bedroom Wi-Fi). While it is
+// off-cloud the endpoint answers but reports "null response from processor" - the cloud
+// could not reach the bed - and the command was simply discarded, so a fan press from HA
+// silently did nothing. These dropouts are usually short, so hold the command and keep
+// offering it for a window instead of losing it.
+const RETRY_WINDOW_MS = 30_000;
+const RETRY_INTERVAL_MS = 3_000;
+
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 // ActiveBreeze fan/heat control. Sends via the processorCommand endpoint (not adjustableBaseControls).
 // Pass one or both sides; omitted sides are left unchanged by the base.
 export const sendFanControlCommand = async (
@@ -43,28 +53,45 @@ export const sendFanControlCommand = async (
     ...(sides.left ? buildSidePayload('left', sides.left) : {}),
     ...(sides.right ? buildSidePayload('right', sides.right) : {}),
   };
-  try {
-    const response = await axios.request<Response>({
-      method: 'POST',
-      url: `${processorBaseUrl}/processorCommand`,
-      headers: {
-        ...defaultHeaders,
-        Host: appHost,
-        Authorization: authHeader,
-      },
-      data: {
-        ...buildDefaultPayload('processorCommand', credentials),
-        endpoint: '/command/v1/motor-command',
-        processorCommand: { fanControl },
-      },
-    });
-    const { statusCode, body } = response.data;
-    if (statusCode !== 0) {
-      logError('[Sleeptracker]', JSON.stringify(response.data));
+  const deadline = Date.now() + RETRY_WINDOW_MS;
+  let attempt = 0;
+  let lastProblem = '';
+
+  for (;;) {
+    attempt++;
+    try {
+      const response = await axios.request<Response>({
+        method: 'POST',
+        url: `${processorBaseUrl}/processorCommand`,
+        headers: {
+          ...defaultHeaders,
+          Host: appHost,
+          Authorization: authHeader,
+        },
+        data: {
+          ...buildDefaultPayload('processorCommand', credentials),
+          endpoint: '/command/v1/motor-command',
+          processorCommand: { fanControl },
+        },
+      });
+      const { statusCode, body } = response.data;
+      if (statusCode === 0) {
+        if (attempt > 1) logInfo(`[Sleeptracker] Fan command landed on attempt ${attempt}`);
+        return body?.snapshots || [];
+      }
+      lastProblem = JSON.stringify(response.data);
+    } catch (err: any) {
+      lastProblem = err?.message ?? String(err);
     }
-    return body?.snapshots || [];
-  } catch (err) {
-    logError(err);
-    return [];
+
+    // Out of time: report the last failure exactly as before, so nothing is hidden.
+    if (Date.now() + RETRY_INTERVAL_MS > deadline) {
+      logError(
+        `[Sleeptracker] Fan command failed after ${attempt} attempt(s) over ${RETRY_WINDOW_MS / 1000}s:`,
+        lastProblem
+      );
+      return [];
+    }
+    await delay(RETRY_INTERVAL_MS);
   }
 };
