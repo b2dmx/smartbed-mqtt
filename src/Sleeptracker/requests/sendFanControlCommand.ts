@@ -38,6 +38,14 @@ const RETRY_INTERVAL_MS = 3_000;
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+// Retrying for 30s means an older command can still be in flight when a newer one
+// arrives - press High, change your mind, press Off, and the stale High could land
+// AFTER the Off and undo it. Scrolling a dropdown can queue several in a second.
+// Each side therefore carries a generation counter: issuing a command bumps it for
+// every side that command targets, and a retry loop abandons as soon as it sees a
+// newer command for a side it was setting. Last intent wins; stale intent is dropped.
+const latestGeneration: Record<FanSide, number> = { left: 0, right: 0 };
+
 // ActiveBreeze fan/heat control. Sends via the processorCommand endpoint (not adjustableBaseControls).
 // Pass one or both sides; omitted sides are left unchanged by the base.
 export const sendFanControlCommand = async (
@@ -53,6 +61,11 @@ export const sendFanControlCommand = async (
     ...(sides.left ? buildSidePayload('left', sides.left) : {}),
     ...(sides.right ? buildSidePayload('right', sides.right) : {}),
   };
+  const targetedSides = (Object.keys(sides) as FanSide[]).filter((side) => sides[side]);
+  const myGeneration = {} as Record<FanSide, number>;
+  for (const side of targetedSides) myGeneration[side] = ++latestGeneration[side];
+  const superseded = () => targetedSides.some((side) => latestGeneration[side] !== myGeneration[side]);
+
   const deadline = Date.now() + RETRY_WINDOW_MS;
   let attempt = 0;
   let lastProblem = '';
@@ -84,6 +97,13 @@ export const sendFanControlCommand = async (
       lastProblem = err?.message ?? String(err);
     }
 
+    // A newer command for one of these sides exists - drop this one rather than
+    // letting stale intent land after it.
+    if (superseded()) {
+      logInfo(`[Sleeptracker] Fan command superseded, abandoning after ${attempt} attempt(s)`);
+      return [];
+    }
+
     // Out of time: report the last failure exactly as before, so nothing is hidden.
     if (Date.now() + RETRY_INTERVAL_MS > deadline) {
       logError(
@@ -93,5 +113,9 @@ export const sendFanControlCommand = async (
       return [];
     }
     await delay(RETRY_INTERVAL_MS);
+    if (superseded()) {
+      logInfo(`[Sleeptracker] Fan command superseded, abandoning after ${attempt} attempt(s)`);
+      return [];
+    }
   }
 };
