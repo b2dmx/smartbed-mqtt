@@ -1,9 +1,9 @@
 {
   "name": "Smartbed MQTT+",
-  "version": "1.1.22-activebreeze-test22",
-  "slug": "smartbed-mqtt",
+  "version": "1.1.22-plus.1",
+  "slug": "smartbed-mqtt-plus",
   "description": "Maintained fork of richardhopton/smartbed-mqtt with reliability fixes and experimental Tempur ActiveBreeze cooling/heating controls.",
-  "url": "https://github.com/richardhopton/smartbed-mqtt",
+  "url": "https://github.com/b2dmx/smartbed-mqtt",
   "startup": "application",
   "arch": [
     "aarch64",

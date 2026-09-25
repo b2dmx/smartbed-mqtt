@@ -1,5 +1,5 @@
 {
-  "name": "Smartbed MQTT Add-On",
-  "url": "https://github.com/richardhopton/smartbed-mqtt",
-  "maintainer": "richardhopton"
+  "name": "Smartbed MQTT+ (b2dmx fork)",
+  "url": "https://github.com/b2dmx/smartbed-mqtt",
+  "maintainer": "b2dmx (fork of richardhopton/smartbed-mqtt)"
 }
