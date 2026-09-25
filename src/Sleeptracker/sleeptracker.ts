@@ -3,7 +3,7 @@ import { republishEntities } from '@ha/base/Entity';
 import { Dictionary } from '@utils/Dictionary';
 import { getSideNameFunc } from '@utils/getSideNameFunc';
 import { logError, logInfo } from '@utils/logger';
-import { minutes } from '@utils/minutes';
+import { seconds } from '@utils/seconds';
 import { buildEntityConfig } from 'Sleeptracker/buildEntityConfig';
 import { buildMQTTDeviceData } from './buildMQTTDeviceData';
 import { DeviceInfoSensor } from './entities/DeviceInfoSensor';
@@ -149,5 +149,7 @@ export const sleeptracker = async (mqtt: IMQTTConnection) => {
     republishEntities();
   };
   await refreshDeviceData();
-  setInterval(refreshDeviceData, minutes(getRefreshFrequency()));
+  // Poll interval is now in SECONDS (was minutes). Floor at 15s so a stale minutes-era
+  // value (e.g. 1) can't turn into a 1s cloud hammer after this unit change.
+  setInterval(refreshDeviceData, seconds(Math.max(getRefreshFrequency(), 15)));
 };

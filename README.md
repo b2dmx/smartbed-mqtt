@@ -1,3 +1,44 @@
+# Smartbed MQTT+
+
+> **A maintained fork of [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt) by Richard Hopton.**
+> All original credit to Richard Hopton and the community contributors listed throughout this
+> document. This fork (`b2dmx`) adds reliability fixes and **experimental** Tempur **ActiveBreeze**
+> cooling/heating climate controls. See [What's added in +](#whats-added-in-) below.
+>
+> _ActiveBreeze note: the climate controls are hardware-tested but newer and less battle-tested
+> than the core features — treat them as experimental._
+
+---
+
+
+## What's added in +
+
+Everything below is additive to Richard Hopton's original; nothing from the upstream
+feature set was removed.
+
+**New feature**
+- **Tempur ActiveBreeze climate controls** (experimental) — per-side cooling level
+  (Off/Low/Medium/High), Temp-Curve vs Constant Cool, and heat, plus Sync entities that
+  drive both sides at once. Works for `sleeptracker`, `ergomotion`, and `keeson` beds.
+
+**Reliability (benefits every bed type)**
+- Entities re-assert availability + set the MQTT retain flag every refresh, so a transient
+  cloud/proxy hiccup no longer strands entities as `unavailable` until an add-on restart.
+- The add-on survives ESPHome proxy socket drops and mid-connect BLE failures instead of
+  crash-looping (previously a dropped proxy could take the whole add-on down for a day).
+- Bumped `@2colors/esphome-native-api` to 1.3.6 — fixes the "Failed find message type for
+  Id: 126" crash against ESPHome 2026.x firmware for all BLE bed types.
+- Sleeptracker discovery retries at startup instead of giving up, and a single failed poll
+  no longer drops climate entities offline.
+
+**Other**
+- Run more than one integration at once via `additionalTypes` (e.g. local Keeson BLE for
+  motors + Sleeptracker cloud for ActiveBreeze).
+- Keeson KSSF05C detection, safety-light and massage-wave buttons.
+- `sleeptrackerRefreshFrequency` is now in **seconds** (was minutes) for finer polling.
+
+---
+
 # Smart Bed MQTT
 
 This project aims to enable remote control of adjustable smart beds from HomeAssistant.

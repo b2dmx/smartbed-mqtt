@@ -1,8 +1,8 @@
 {
-  "name": "Smartbed MQTT (ActiveBreeze test)",
-  "version": "1.1.22-activebreeze-test21",
+  "name": "Smartbed MQTT+",
+  "version": "1.1.22-activebreeze-test22",
   "slug": "smartbed-mqtt",
-  "description": "A Home Assistant add-on to enable controlling smart beds.",
+  "description": "Maintained fork of richardhopton/smartbed-mqtt with reliability fixes and experimental Tempur ActiveBreeze cooling/heating controls.",
   "url": "https://github.com/richardhopton/smartbed-mqtt",
   "startup": "application",
   "arch": [
@@ -24,7 +24,7 @@
     "mqtt_password": "<auto_detect>",
     "type": "sleeptracker",
     "additionalTypes": [],
-    "sleeptrackerRefreshFrequency": 1,
+    "sleeptrackerRefreshFrequency": 30,
     "sleeptrackerCredentials": [
       {
         "email": "me@example.org",
