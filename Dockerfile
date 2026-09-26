@@ -39,8 +39,8 @@ COPY --from=0 /smartbed-mqtt/dist/tsc/ /smartbed-mqtt/
 ENTRYPOINT [ "/smartbed-mqtt/run.sh" ]
 #ENTRYPOINT [ "node", "index.js" ]
 LABEL \
-    io.hass.name="Smartbed Integration via MQTT" \
-    io.hass.description="Home Assistant Community Add-on for Smartbeds" \
+    io.hass.name="Smartbed MQTT+ Integration" \
+    io.hass.description="Smartbed MQTT+ - maintained fork of richardhopton/smartbed-mqtt" \
     io.hass.type="addon" \
     io.hass.version="1.1.22" \
-    maintainer="Richard Hopton <richard@thehoptons.com>"
+    maintainer="b2dmx (Smartbed MQTT+, fork of Richard Hopton's smartbed-mqtt)"
